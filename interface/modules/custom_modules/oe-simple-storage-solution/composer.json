@@ -1,0 +1,31 @@
+{
+    "name": "vendor_name/oe-simple-storage-solution",
+    "description": "Name Here module via Juggernaut Systems Express",
+    "type": "openemr-module",
+    "minimum-stability": "stable",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Sherwin",
+            "email": "sherwingaddis@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "keywords": ["openemr", "openemr-module"],
+    "minimum-stability": "stable",
+    "autoload": {
+        "psr-4": {"Juggernaut\\SimpleStorageSolution\\Module\\": "src/"}
+    },
+    "require": {
+        "php": ">=7.4",
+        "aws/aws-sdk-php": "^3.231"
+    },
+    "conflict": {
+        "openemr/openemr": "<6.0.0"
+    },
+    "config": {
+        "allow-plugins": {
+            "openemr/oe-module-installer-plugin": true
+        }
+    }
+}

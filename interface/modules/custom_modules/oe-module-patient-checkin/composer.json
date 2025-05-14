@@ -1,0 +1,18 @@
+{
+    "name": "juggernautsei/oe-module-patient-checkin",
+    "description": "A module to check in patients",
+    "minimum-stability": "stable",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Sherwin",
+            "email": "sherwingaddis@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "autoload": {
+        "psr-4": {"Juggernaut\\Module\\PatientCheckin\\": "src/"}
+    },
+    "require": {
+    }
+}

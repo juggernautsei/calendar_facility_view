@@ -1,0 +1,10 @@
+.phpbench
+jose.phar
+jose.phar.pubkey
+jose.phar.version
+report.md
+composer.lock
+.*.cache
+vendor/
+src/Bundle/JoseFramework/var/
+infection.txt

@@ -1,0 +1,597 @@
+{% extends 'base.twig' %}
+
+{% block title %}{{ title | xlt }}{% endblock %}
+
+{% block head %}
+    {{ setupHeader(['common','jquery-ui', 'jquery-ui-base', 'select2']) }}
+    <style>
+        .table-responsive {
+            overflow-x: auto;
+        }
+        .form-control {
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <h3 class="m-4">{{ "Rapid Charge Sheet" | xlt }}</h3>
+    {% if rapid_data is defined %}
+        <div class="alert alert-success" id="rapidAlert" role="alert">
+            <strong>{{ rapid_data.status | capitalize }}:</strong> {{ rapid_data.message }}
+            {% if rapid_data.encounter is defined %}
+                (Encounter ID: {{ rapid_data.encounter }})
+            {% endif %}
+        </div>
+    {% endif %}
+    <form name="fastEncounter" method="post" action="{{ webroot }}/interface/modules/custom_modules/oe-module-hospital-charge/public/index.php/startClaim">
+    <div class="row m-2">
+        <div class="col-md-6">
+            <label for="servicedate">{{ "Service Date" | xlt }}
+            <input type="date" name="servicedate" value="" class="form-control" placeholder="{{ "Service Date" | xlt }}">
+            </label>
+        </div>
+        <div class="col-md-6">
+            <label for="onsetdate">{{ "Onset Date" | xlt }}
+                <input type="date" name="onsetdate" value="" class="form-control" placeholder="{{ "Onset Date" | xlt }}">
+                <input type="hidden" name="selected_patient_id" value="">
+                <input type="hidden" name="selected_provider_id" value="">
+                <input type="hidden" name="selected_supervisor_id" value="">
+            </label>
+        </div>
+    </div>
+    <div class="row m-2">
+        <div class="col-md">
+            <input type="text" name="searchpatient" value="" class="form-control" placeholder="{{ "Search for Patient mm-dd-yyyy" | xlt }}">
+        </div>
+        <div class="col-md">
+            <input type="text" name="searchprovider" value="" class="form-control" placeholder="{{ "Search for Rendering Provider" | xlt }}">
+        </div>
+        <div class="col-md">
+            <input type="text" name="searchsupervisor" value="" class="form-control" placeholder="{{ "Search for Supervisor" | xlt }}">
+        </div>
+        <div class="col-md">
+            <select name="facility" class="form-control facility">
+                <option value="">{{ 'Select a Facility' | xlt }}</option>
+                {% for facility in facilities %}
+                    <option value="{{ facility.id }}">{{ facility.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="row m-2">
+        <div class="col-md-12 m-3">
+            <input type="text" name="searchcpt4" value="" class="form-control" placeholder="{{ "Search CPT4" | xlt }}">
+        </div>
+        <div class="col-md-12 text-center">
+            <label class="radio-inline btn btn-secondary">
+                <input type="radio" name="search_type" value="CPT4" checked>&nbsp;{{ "CPT4
+            Procedure/Service" | xlt }}
+            </label>
+            <label class="radio-inline btn btn-secondary">
+                <input type="radio" name="search_type" value="ICD10">&nbsp;
+                {{ "ICD10 Diagnosis" | xlt }}
+            </label>
+            <label class="radio-inline btn btn-secondary">
+                <input type="radio" name="search_type" value="HCPCS">&nbsp;{{ "HCPCS
+            Procedure/Service" | xlt }}
+            </label>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+                <div class="table-responsive">
+                <table class="table table-bordered table-hover table-striped">
+                    <thead>
+                        <tr>
+                            <th>{{ "Type" | xlt }}</th>
+                            <th>{{ "Code" | xlt }}</th>
+                            <th style="width: 645px">{{ "Description" | xlt }}</th>
+                            <th>{{ "Modifier" | xlt }}</th>
+                            <th>{{ "Price" | xlt }}</th>
+                            <th>{{ "Qty" | xlt }}</th>
+                            <th>{{ "Justify" | xlt }}</th>
+                            <th>{{ "Note Codes" | xlt }}</th>  <!-- ✅ Added NDC Column -->
+                            <th>{{ "Auth" | xlt }}</th>
+                            <th>{{ "Delete" | xlt }}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="codeTableBody">
+                    </tbody>
+                    <tr>
+                    </tr>
+                </table>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-md-12 text-center">
+                        <button type="submit" class="btn btn-primary">{{ "Save" | xlt }}</button>
+                        <button type="submit" class="btn btn-danger">{{ "Clear" | xlt }}</button>
+                    </div>
+                </div>
+        </div>
+    </div>
+    </form>
+{% endblock %}
+{% block scripts %}
+    <script>
+        $(window).on("load", function() {
+            // Set the default placeholder when the page loads
+            $('input[name="searchcpt4"]').attr('placeholder', 'Search CPT4 Code');
+
+            // Handle radio button change event
+            $('input[name="search_type"]').change(function() {
+                const search_type = $(this).val();
+                if (search_type === 'CPT4') {
+                    $('input[name="searchcpt4"]').attr('placeholder', 'Search CPT4 Code');
+                } else if (search_type === 'ICD10') {
+                    $('input[name="searchcpt4"]').attr('placeholder', 'Search ICD10 Code');
+                } else if (search_type === 'HCPCS') {
+                    $('input[name="searchcpt4"]').attr('placeholder', 'Search HCPCS Code');
+                }
+            });
+        });
+        $(window).on("load", function () {
+            $('select.facility').select2({
+                placeholder: '{{ 'Select a Facility' | xl }}',
+                allowClear: true
+            });
+            // Autocomplete for CPT4 (or ICD10/HCPCS) codes
+            $('input[name="searchcpt4"]').autocomplete({
+                source: function (request, response) {
+                    let webroot = '{{ webroot }}';
+                    let search_type = $('input[name="search_type"]:checked').val();
+                    let url = webroot + '/interface/modules/custom_modules/oe-module-hospital-charge/public/index.php/searchCpt4/' + search_type + '/' + encodeURIComponent(request.term);
+                    fetch(url, {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json' }
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            //console.log("API Response:", data); // Debugging log
+                            let formattedData = data.map(cpt4 => ({
+                                label: `${cpt4.code} - ${cpt4.description}`,
+                                value: cpt4.code,
+                                id: cpt4.id || cpt4.code,
+                                description: cpt4.description,  // Ensure description is available
+                                price: cpt4.price || "0.00"   // Use actual price or default
+                            }));
+                            response(formattedData);
+                        })
+                        .catch(error => {
+                            console.error('Error fetching CPT4 data:', error);
+                            alert('Error: Unable to retrieve CPT4/ICD10/HCPCS data. Please try again later. ' + error);
+                        });
+                },
+                minLength: 3,
+                select: function (event, ui) {
+                    //console.log("Autocomplete selected:", ui.item.value); // Debugging log
+
+                    // Auto-fill input and trigger row population
+                    let selectedData = {
+                        code: ui.item.value,
+                        description: ui.item.description,
+                        price: ui.item.price,
+                        type: $('input[name="search_type"]:checked').val()
+                    };
+
+                    addRow(selectedData);
+                    return false;
+                }
+            });
+
+            // Autocomplete for supervisor
+            $('input[name="searchsupervisor"]').autocomplete({
+                source: function (request, response) {
+                    let webroot = '{{ webroot }}';
+                    let url = webroot + '/interface/modules/custom_modules/oe-module-hospital-charge/public/index.php/searchProvider/' + encodeURIComponent(request.term)
+                    fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        //format the response to show Name
+                        let formattedData = data.map(provider => ({
+                            label: `${provider.name}`, // What is displayed
+                            value: provider.name,  // What is placed in the input field when selected
+                            id: provider.id  // Store provider ID for further use
+                        }));
+
+                        response(formattedData);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching provider data:', error);
+                        alert('Error: Unable to retrieve provider data. Please try again later. ' + error);
+                    });
+                },
+                minLength: 3,
+                select: function (event, ui) {
+                    // Fill the input field with the selected provider name
+                    $(this).val(ui.item.value);
+                    $('input[name="selected_supervisor_id"]').val(ui.item.id);
+                    return false; // Prevent default behavior
+                }
+            });
+            // Autocomplete for provider
+            $('input[name="searchprovider"]').autocomplete({
+                source: function (request, response) {
+                    let webroot = '{{ webroot }}';
+                    let url = webroot + '/interface/modules/custom_modules/oe-module-hospital-charge/public/index.php/searchProvider/' + encodeURIComponent(request.term)
+                    fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        //format the response to show Name
+                        let formattedData = data.map(provider => ({
+                            label: `${provider.name}`, // What is displayed
+                            value: provider.name,  // What is placed in the input field when selected
+                            id: provider.id  // Store provider ID for further use
+                        }));
+
+                        response(formattedData);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching provider data:', error);
+                        alert('Error: Unable to retrieve provider data. Please try again later. ' + error);
+                    });
+                },
+                minLength: 3,
+                select: function (event, ui) {
+                    // Fill the input field with the selected provider name
+                    $(this).val(ui.item.value);
+                    $('input[name="selected_provider_id"]').val(ui.item.id);
+                    return false; // Prevent default behavior
+                }
+            });
+
+            // Autocomplete for patient
+            $('input[name="searchpatient"]').autocomplete({
+                source: function (request, response) {
+                    let webroot = '{{ webroot }}';
+                    let url = webroot + '/interface/modules/custom_modules/oe-module-hospital-charge/public/index.php/searchPatient/' + encodeURIComponent(request.term)
+                    fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        // Format the response to show Name + DOB
+                        let formattedData = data.map(patient => ({
+                            label: `${patient.name} (DOB: ${patient.dob})`, // What is displayed
+                            value: patient.name,  // What is placed in the input field when selected
+                            id: patient.id  // Store patient ID for further use
+                        }));
+
+                        response(formattedData);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching patient data:', error);
+                        alert('Error: Unable to retrieve patient data. Please try again later. ' + error);
+                    });
+                },
+                minLength: 3,
+                select: function(event, ui) {
+                    // Fill the input field with the selected patient name
+                    $(this).val(ui.item.value);
+                    // Store the patient ID in a hidden field for later use
+                    $('input[name="selected_patient_id"]').val(ui.item.id);
+                    return false; // Prevent default behavior
+                }
+            });
+
+        });
+        let rowCounterIcd = 200; // ✅ Start ICD10 row counter at 200
+        let rowCounterCpt = 100; // ✅ Start CPT4 row counter at 0
+        function addRow(data) {
+            let tableBody = document.getElementById("codeTableBody");
+            let index = rowCounterIcd++;
+            // Check if the code already exists
+            let existingRows = tableBody.getElementsByTagName("tr");
+            for (let row of existingRows) {
+                let existingCodeInput = row.querySelector("input[name='code']");
+                if (existingCodeInput && existingCodeInput.value === data.code) {
+                    alert("This code has already been added. Please select a different code.");
+                    return;
+                }
+            }
+
+            // If the code is an ICD10, update justification fields & add a row at the bottom
+            if (data.type === "ICD10") {
+                // Add ICD10 row at the bottom of the table
+                let newICDRow = document.createElement("tr");
+                newICDRow.innerHTML = `
+            <td><input type="text" name="rows[${index}][codetype]" class="form-control" value="ICD10" readonly></td>
+            <td><input type="text" name="rows[${index}][code]" class="form-control" value="${data.code}" readonly></td>
+            <td><input type="text" name="rows[${index}][code_text]" class="form-control" value="${data.description}" readonly></td>
+            <td><input type="text" name="rows[${index}][modifier]" class="form-control"></td>
+            <td><input type="text" name="rows[${index}][fee]" class="form-control" value="-" readonly></td>
+            <td><input type="text" name="rows[${index}][unit]" value="-" class="form-control" readonly></td>
+            <td><input type="text" name="rows[${index}][justify]" class="form-control" readonly></td>
+            <td><input type="text" name="rows[${index}][notecodes]" class="form-control" readonly></td>
+            <td><input type="checkbox" name="rows[${index}][auth]" value="1" class="form-control" checked disabled></td>
+            <td><input type="checkbox" name="rows[${index}][delete]" value="1"></td>
+        `;
+        tableBody.appendChild(newICDRow); // ✅ Append ICD10 row at the bottom
+        addICD10(data.code);
+        return; // Prevent further row creation
+    }
+            // Find the first empty row for CPT4 & HCPCS codes
+            let emptyRow = null;
+            for (let row of existingRows) {
+                let codeInput = row.querySelector("input[name='code']");
+                if (codeInput && codeInput.value === "") {
+                    emptyRow = row;
+                    break;
+                }
+            }
+            let cindex = rowCounterCpt++; // Get new index for CPT row
+            if (emptyRow) {
+                // Update the existing empty row's inputs with names that include the CPT index
+                emptyRow.innerHTML = `
+            <td><input type="text" name="rows[${cindex}][codetype]" class="form-control" value="${data.type}" readonly></td>
+            <td><input type="text" name="rows[${cindex}][code]" class="form-control" value="${data.code}" readonly></td>
+            <td><input type="text" name="rows[${cindex}][code_text]" class="form-control" value="${data.description}" readonly></td>
+            <td><input type="text" name="rows[${cindex}][modifier]" class="form-control"></td>
+            <td><input type="text" name="rows[${cindex}][fee]" class="form-control" value="${data.price}" readonly data-unit-price="${data.price}"></td>
+            <td><input type="text" name="rows[${cindex}][units]" class="form-control" value="1"></td>
+            <td><input type="text" name="rows[${cindex}][justify]" class="form-control"></td>
+            <td><input type="text" name="rows[${cindex}][notecodes]" class="form-control"></td>
+            <td><input type="checkbox" name="rows[${cindex}][auth]" value="1" class="form-control" checked></td>
+            <td><input type="checkbox" name="rows[${cindex}][delete]" value="1"></td>
+        `;
+            } else {
+                let newRow = document.createElement("tr");
+                newRow.innerHTML = `
+            <td><input type="text" name="rows[${cindex}][codetype]" class="form-control" value="${data.type}" readonly></td>
+            <td><input type="text" name="rows[${cindex}][code]" class="form-control" value="${data.code}" readonly></td>
+            <td><input type="text" name="rows[${cindex}][code_text]" class="form-control" value="${data.description}" readonly></td>
+            <td><input type="text" name="rows[${cindex}][modifier]" class="form-control"></td>
+            <td><input type="text" name="rows[${cindex}][fee]" class="form-control" value="${data.price}" readonly data-unit-price="${data.price}"></td>
+            <td><input type="text" name="rows[${cindex}][units]" class="form-control" value="1"></td>
+            <td><input type="text" name="rows[${cindex}][justify]" class="form-control"></td>
+            <td><input type="text" name="rows[${cindex}][notecodes]" class="form-control"></td>
+            <td><input type="checkbox" name="rows[${cindex}][auth]" value="1" class="form-control" checked></td>
+            <td><input type="checkbox" name="rows[${cindex}][delete]" value="1"></td>
+        `;
+                tableBody.appendChild(newRow);
+            }
+            // If the type is HCPCS, add additional text boxes below the selected row
+            // this needs to be tested
+            if (data.type === "HCPCS") {
+                let additionalRow = document.createElement("tr");
+                additionalRow.innerHTML = `
+            <td><strong>HCPCS Details:</strong></td>
+            <td colspan="5"><input type="text" name="rows[${index}][ndcnum]" class="form-control" placeholder="Enter NDC Code"></td>
+            <td ><input type="text" name="rows[${index}][ndcqty]" class="form-control" placeholder="Qty"></td>
+            <td colspan="3"><select type="text" name="rows[${index}][ndcuom]" class="form-control"><option value="ML">ML</option><option value="GR">Grams</option><option value="ME">Milligrams</option><option value="F2">I.U.</option><option value="UN" selected="">Units</option></select></td>
+        `;
+
+                tableBody.appendChild(additionalRow);
+            }
+        }
+
+        // Ensure price updates correctly when quantity changes using the new indexed names
+        $(document).on("input", "input[name$='[units]']", function () {
+            let $row = $(this).closest("tr"); // Get the current row
+            let quantity = parseInt($(this).val()) || 1; // Parse quantity, defaulting to 1 if empty
+            let $priceField = $row.find("input[name$='[fee]']"); // Find the price field in the same row
+            let unitPrice = parseFloat($priceField.attr("data-unit-price")) || 0; // Retrieve the stored unit price
+
+            if ($(this).val() === "") {
+                return; // Prevent updating if quantity is blank
+            }
+
+            // Calculate and update the total price
+            let newTotalPrice = (unitPrice * quantity).toFixed(2);
+            $priceField.val(newTotalPrice);
+        });
+
+
+        function addICD10(icdCode) {
+            let tableBody = document.getElementById("codeTableBody");
+            let rows = tableBody.querySelectorAll("tr");
+
+            rows.forEach(row => {
+                // Use attribute selectors to target the new indexed field names
+                let typeInput = row.querySelector("input[name$='[codetype]']");
+                if (typeInput && (typeInput.value === "CPT4" || typeInput.value === "HCPCS")) {
+                    let justifyField = row.querySelector("input[name$='[justify]']");
+                    if (!justifyField) return; // In case the field doesn't exist
+
+                    let currentJustify = justifyField.value.trim();
+                    // Split the justification string into an array, handling empty values
+                    let currentICD10s = currentJustify ? currentJustify.split(",")
+                        .map(j => j.trim())
+                        .filter(j => j.startsWith("ICD10|") && j !== "") : [];
+
+                    // Avoid adding duplicate ICD10 codes
+                    let icdEntry = `ICD10|${icdCode.trim()}`;
+                    if (!currentICD10s.includes(icdEntry)) {
+                        currentICD10s.push(icdEntry);
+                    }
+
+                    // Update the justification field with the new list
+                    justifyField.value = currentICD10s.join(",");
+                }
+            });
+        }
+
+        // Hook into the CPT4, ICD10, HCPCS autocomplete selection
+        $(document).on("change", "input[name='code']", function () {
+            let selectedCode = $(this).val();
+            let codeType = $('input[name="search_type"]:checked').val(); // CPT4, ICD10, HCPCS
+
+            if (selectedCode) {
+                let selectedData = {
+                    code: selectedCode,
+                    description: "Sample Description", // Fetch actual description from API
+                    price: "0.00", // Fetch actual price from API
+                    type: codeType // Use selected type
+                };
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll("input[name='code']").forEach(input => {
+                input.addEventListener("change", function () {
+                    let selectedData = {
+                        code: this.value,
+                        description: "Sample Description", // Replace with fetched data
+                        price: "0.00", // Replace with fetched data
+                        type: "CPT4" // Replace with fetched data
+                    };
+                    addRow(selectedData);
+                });
+            });
+        });
+        // Wait until the page is fully loaded
+        $(document).ready(function () {
+            // Handle ICD10 row deletion
+            $(document).on("change", "input[name='delete']", function () {
+                let row = $(this).closest("tr");
+                let type = row.find("input[name='codetype']").val();
+                let icdCode = row.find("input[name='code']").val().trim(); // ✅ Trimmed ICD10 code
+
+                if (type === "ICD10") {
+                    if (confirm(`Do you really want to remove ICD10 code ${icdCode}?`)) {
+                        row.remove(); // ✅ Remove the ICD10 row
+                        removeICD10FromJustification(icdCode); // ✅ Update justification fields
+                    } else {
+                        $(this).prop("checked", false); // ❌ Uncheck if user cancels
+                    }
+                } else {
+                    // Normal CPT4/HCPCS row deletion
+                    if (confirm("Do you really want to remove this row?")) {
+                        row.remove();
+                    } else {
+                        $(this).prop("checked", false);
+                    }
+                }
+            });
+        });
+        $(document).ready(function () {
+            // Handle quantity change event
+            $(document).on("input", "input[name='qty']", function () {
+                let row = $(this).closest("tr"); // Get the row where quantity changed
+                let quantity = parseInt($(this).val()) || 1; // Get quantity, default to 1 if empty
+                let priceField = row.find("input[name='price']"); // Get the price field
+                let unitPrice = parseFloat(priceField.attr("data-unit-price")) || 0; // ✅ Get stored unit price
+
+                // Calculate new total price
+                let newTotalPrice = (unitPrice * quantity).toFixed(2);
+
+                // Update the price field with the new total
+                priceField.val(newTotalPrice);
+            });
+        });
+
+        // Validation function
+        function validateForm() {
+            let isValid = true;
+            let errorMessages = []; // Store error messages
+
+            // Required Fields Validation
+            const requiredFields = [
+                { name: 'servicedate', message: 'Service Date is required.' },
+                { name: 'selected_patient_id', message: 'Patient is required.' },
+                { name: 'selected_provider_id', message: 'Rendering Provider is required.' },
+                { name: 'facility', message: 'Facility is required.' },
+                // Add more required fields as needed
+            ];
+
+            requiredFields.forEach(field => {
+                const element = document.querySelector(`[name="${field.name}"]`);
+                if (!element.value.trim()) {
+                    isValid = false;
+                    errorMessages.push(field.message);
+                    element.classList.add('is-invalid'); // Bootstrap class for visual feedback
+                } else {
+                    element.classList.remove('is-invalid');
+                }
+            });
+
+            // Date Validation
+            const dateFields = [
+                { name: 'servicedate', message: 'Invalid Service Date.' },
+                { name: 'onsetdate', message: 'Invalid Onset Date.' },
+            ];
+
+            dateFields.forEach(field => {
+                const element = document.querySelector(`[name="${field.name}"]`);
+                if (element.value.trim() && !isValidDate(element.value)) {
+                    isValid = false;
+                    errorMessages.push(field.message);
+                    element.classList.add('is-invalid');
+                } else {
+                    element.classList.remove('is-invalid');
+                }
+            });
+
+            //Specific field validation.
+            let tableBody = document.getElementById("codeTableBody");
+            let rows = tableBody.querySelectorAll("tr");
+            let codeFound = false;
+            rows.forEach(row => {
+                let codeInput = row.querySelector("input[name$='[code]']");
+                if (codeInput && codeInput.value.trim() != ""){
+                    codeFound = true;
+                }
+            })
+            if (!codeFound){
+                isValid = false;
+                errorMessages.push("You must enter at least one code.");
+            }
+
+            // Display Error Messages
+            if (!isValid) {
+                alert(errorMessages.join('\n')); // Display errors in an alert
+                return false; // Prevent form submission
+            }
+
+            return true; // Allow form submission
+        }
+
+        // Helper function to check if a date is valid (YYYY-MM-DD format)
+        function isValidDate(dateString) {
+            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+            if (!dateRegex.test(dateString)) return false;
+
+            const date = new Date(dateString);
+            const timestamp = date.getTime();
+
+            if (typeof timestamp !== 'number' || Number.isNaN(timestamp)) return false;
+
+            return date.toISOString().startsWith(dateString);
+        }
+
+        // Attach validation to the form submission event
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.querySelector("form[name='fastEncounter']");
+            if (form) {
+                form.addEventListener("submit", function (e) {
+                    if (!validateForm()) {
+                        e.preventDefault();
+                    }
+                });
+            }
+        });
+
+        // Wait 5 seconds (15000 milliseconds) and then hide the alert
+        setTimeout(function() {
+            var alertBox = document.getElementById('rapidAlert');
+            if (alertBox) {
+                alertBox.style.display = 'none';
+            }
+        }, 5000);
+    </script>
+
+{% endblock %}

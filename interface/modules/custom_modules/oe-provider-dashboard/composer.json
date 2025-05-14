@@ -1,0 +1,21 @@
+{
+    "name": "juggernautsei/oe-provider-dashboard",
+    "description": "A dashboard for the OpenEMR Provider",
+    "minimum-stability": "stable",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Sherwin",
+            "email": "sherwingaddis@gmail.com"
+        }
+    ],
+    "keywords": ["openemr", "openemr-module"],
+    "minimum-stability": "stable",
+    "autoload": {
+        "psr-4": {"Juggernaut\\ProviderDashboard\\Module\\": "src/"}
+    },
+    "require": {
+        "symfony/routing": "^4.3",
+        "symfony/http-foundation": "^7.0"
+    }
+}

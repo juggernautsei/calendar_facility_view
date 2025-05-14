@@ -1,0 +1,15 @@
+        $s3client = new Aws\S3\S3Client(['region' => 'us-west-2']);
+
+        $fileName = __DIR__ . "/local-file-" . uniqid();
+        try {
+            $this->s3client->putObject([
+                'Bucket' => $this->bucketName,
+                'Key' => $fileName,
+                'SourceFile' => __DIR__ . '/testfile.txt'
+            ]);
+            echo "Uploaded $fileName to $this->bucketName.\n";
+        } catch (Exception $exception) {
+            echo "Failed to upload $fileName with error: " . $exception->getMessage();
+            exit("Please fix error with file upload before continuing.");
+        }
+

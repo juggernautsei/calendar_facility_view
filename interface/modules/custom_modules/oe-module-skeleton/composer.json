@@ -1,0 +1,22 @@
+{
+    "name": "vendor_name/oe-module-skeleton",
+    "description": "description",
+    "minimum-stability": "stable",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Sherwin",
+            "email": "email@example.com"
+        }
+    ],
+    "require": {
+    },
+    "autoload": {
+        "psr-4": {"Skeleton\\Module\\": "src/"}
+    },
+    "conflict": {
+        "openemr/openemr": ">=7.0.1"
+    },
+    "config": {
+    }
+}

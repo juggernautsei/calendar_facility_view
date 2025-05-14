@@ -1,0 +1,33 @@
+{
+    "name": "vendor_name/oe-patient-appt-email-reminders",
+    "description": "Module via Juggernaut Systems Express to automatically send remindes to patients each morning",
+    "type": "openemr-module",
+    "minimum-stability": "stable",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Sherwin",
+            "email": "sherwingaddis@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "keywords": ["openemr", "openemr-module"],
+    "minimum-stability": "stable",
+    "autoload": {
+        "psr-4": {"Juggernaut\\Modules\\": "src/"}
+    },
+    "require": {
+        "openemr/oe-module-installer-plugin": "^0.1.0",
+        "php": "^7.1",
+        "symfony/event-dispatcher": "^4.4.0",
+        "nyholm/psr7": "^1.4"
+    },
+    "conflict": {
+        "openemr/openemr": "<6.0.0"
+    },
+    "config": {
+        "allow-plugins": {
+            "openemr/oe-module-installer-plugin": true
+        }
+    }
+}

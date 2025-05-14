@@ -1,0 +1,15 @@
+{
+    "name": "juggernautsei/oe-patient-communication",
+    "description": "email communication for openemr",
+    "minimum-stability": "stable",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Sherwin",
+            "email": "sherwingaddis@gmail.com"
+        }
+    ],
+    "require": {
+        "sendgrid/sendgrid": "~7"
+    }
+}

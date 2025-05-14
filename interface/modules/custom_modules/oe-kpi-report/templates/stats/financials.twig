@@ -1,0 +1,71 @@
+<div class="row">
+    <div class="col-md-3 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title text-center">{{ "Charges"|xlt }}</h4>
+            </div>
+            <h1 class="text-center">{{ chargesMonth | money }}</h1>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title text-center">{{ "Adjustments"|xlt }}</h4>
+            </div>
+            <h1 class="text-center">{{ adjustmentsMonth | money }}</h1>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title text-center">{{ "Collections"|xlt }}</h4>
+            </div>
+            <canvas id="myChart"></canvas>
+
+            <p><strong>{{ "Total Collections by Payer"|xlt }}:</strong> ${{ payerSum }}</p>
+            <p><strong>{{ "Total Copays Collected"|xlt }}:</strong> </p>
+            <p><strong>{{ "Total Copays Missed"|xlt }}:</strong> </p>
+
+        </div>
+    </div>
+</div>
+<div class="row">
+
+</div>
+
+{% block scripts %}
+    <script>
+        const ctx = document.getElementById('myChart');
+
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: [{{ payers }}],
+                datasets: [{
+                    label: 'Insurance',
+                    data: [{{  insurersPaid }}],
+                    backgroundColor: [
+                        'rgb(255, 99, 132)',
+                        'rgb(54, 162, 235)',
+                        'rgb(255, 205, 86)',
+                        'rgb(75, 192, 192)',
+                        'rgb(153, 102, 255)',
+                        'rgb(255, 159, 64)',
+                        'rgb(238, 130, 238)',
+                        'rgb(255, 215, 0)'
+                    ],
+                    hoverOffset: 4
+                }],
+                options: {
+                    plugins: {
+                        datalabels: {
+                            formatter: (value) => {
+                                return value + '%';
+                            },
+                        },
+                    },
+                },
+            },
+        });
+    </script>
+{% endblock %}

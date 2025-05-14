@@ -1,0 +1,32 @@
+{
+  "name": "juggernaut/past-appointment-status-notifications",
+  "description": "alert that status of appointments have not been changed",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Sherwin",
+      "email": "sherwin@affordablecustomehr.com",
+      "role": "Developer"
+    }
+  ],
+  "keywords": ["openemr", "openemr-module"],
+  "minimum-stability": "stable",
+  "autoload": {
+    "psr-4": {"Juggernaut\\": "src/"}
+  },
+  "require": {
+    "openemr/oe-module-installer-plugin": "^0.1.0",
+    "php": "^7.1",
+    "symfony/event-dispatcher": "^4.4.0",
+    "nyholm/psr7": "^1.4"
+  },
+  "conflict": {
+    "openemr/openemr": "<6.0.0"
+  },
+  "config": {
+    "allow-plugins": {
+      "openemr/oe-module-installer-plugin": true
+    }
+  }
+}

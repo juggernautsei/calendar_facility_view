@@ -1,0 +1,24 @@
+{
+    "name": "juggernautsei/oe-module-dexcom",
+    "description": "Glucose module for OpenEMR",
+    "type": "openemr-module",
+    "minimum-stability": "stable",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Sherwin",
+            "email": "sherwingaddis@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {"Juggernaut\\Dexcom\\Module\\": "src/"}
+    },
+    "require": {
+        "openemr/oe-module-installer-plugin": "^0.1.0",
+        "php": ">= 7.4",
+        "ext-curl": "*"
+    },
+    "conflict": {
+        "openemr/openemr": "<6.0.0"
+    }
+}

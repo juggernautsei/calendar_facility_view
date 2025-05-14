@@ -1,0 +1,54 @@
+/*
+ * package   OpenEMR
+ * link           https://open-emr.org
+ * author      Sherwin Gaddis <sherwingaddis@gmail.com>
+ * Copyright (c) 2024.  Sherwin Gaddis <sherwingaddis@gmail.com>
+ */
+
+/* Style the tab */
+.tab {
+    overflow: auto; /* Ensures that the div adjusts to the content */
+    border: 1px solid #ccc;
+    /*background-color: #f1f1f1;*/
+    padding: 0; /* Remove padding to fit the height exactly to buttons */
+    margin: 0; /* Remove margin to fit the height exactly to buttons */
+}
+
+div.tab {
+    background: #0ba1b5 !important;
+    min-height: auto !important;
+}
+
+/* Style the buttons inside the tab */
+.tab button {
+    background-color: inherit;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 10px 16px; /* Adjust padding as needed */
+    transition: 0.3s;
+    font-size: 17px;
+    margin: 0; /* Make sure there's no extra margin */
+}
+
+/* Remaining styles unchanged */
+.tab button:hover {
+    background-color: #ddd;
+}
+
+.tab button.active {
+    background-color: #ccc;
+}
+
+.tabcontent {
+    display: none;
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-top: none;
+}
+
+/* Specific style to show the Home tab by default */
+#Home {
+    display: block;
+}
+

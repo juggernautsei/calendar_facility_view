@@ -1,0 +1,21 @@
+{
+    "name": "juggernautsei/oe-module-clover",
+    "description": "Clover POS module",
+    "type": "openemr-module",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Sherwin",
+            "email": "email@example.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "autoload": {
+        "psr-4": {"OpenEMR\\Modules\\Clover\\": "src/"}
+    },
+    "require": {
+    },
+    "conflict": {
+        "openemr/openemr": "<7.0.1"
+    }
+}

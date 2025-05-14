@@ -1,0 +1,29 @@
+{
+    "name": "vendor_name/oe-module-wound-care",
+    "description": "description",
+    "minimum-stability": "stable",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Sherwin",
+            "email": "email@example.com"
+        }
+    ],
+    "require": {
+        "slim/slim": "4.*",
+        "slim/psr7": "^1.7",
+        "nyholm/psr7": "^1.8",
+        "nyholm/psr7-server": "^1.1",
+        "guzzlehttp/psr7": "^2"
+    },
+    "autoload": {
+        "psr-4": {
+            "Juggernaut\\Module\\WoundCare\\": "src/"
+        }
+    },
+    "conflict": {
+        "openemr/openemr": ">=7.0.1"
+    },
+    "config": {
+    }
+}

@@ -1,0 +1,14 @@
+{
+    "name": "vendor_name/oe-patient-statements",
+    "description": "Monthly Patient Balance Reminders",
+    "minimum-stability": "stable",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Sherwin",
+            "email": "sherwingaddis@gmail.com"
+        }
+    ],
+    "require": {
+    }
+}

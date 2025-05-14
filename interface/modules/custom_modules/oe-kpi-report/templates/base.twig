@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% block head %}
+        {{ setupHeader(['common', 'datetime-picker', 'i18next']) }}
+    {% endblock %}
+    <title>
+        {% block pagetitle %}KPI Reporting{% endblock %}
+    </title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="../../../../../library/formatting_DateToYYYYMMDD_js.js.php"></script>
+</head>
+<body>
+<div class="container-lg">
+    {% block header %}{% endblock %}
+    {% block content %}{% endblock %}
+    {% block footer %}{% endblock %}
+    {% block scripts %}{% endblock %}
+</div>
+</body>
+</html>
