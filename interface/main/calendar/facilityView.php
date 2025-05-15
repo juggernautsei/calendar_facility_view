@@ -57,7 +57,7 @@ try {
 
     // Assuming your Twig template is named 'facility_day_view.html.twig'
     // and is located in a 'calendar' subdirectory of the main Twig templates folder
-    echo $twig->render('calendar/facility_day_view.html.twig', $viewVars);
+    echo $twig->render('calendar/facilityView/facilityView.html.twig', $viewVars);
 
 } catch (\Exception $e) {
     // Log the error
