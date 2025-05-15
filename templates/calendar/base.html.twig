@@ -1,0 +1,15 @@
+<!DOCTYPE>
+<html>
+    <head>
+        <title>{% block title %}{{ "Calendar"|xlt }}{% endblock %}</title>
+        {% block head %}
+            {{ setupHeader(['no_main-theme', 'portal-theme', 'datetime-picker', 'i18next', 'i18formatting']) }}
+        {% endblock %}
+        <script type="text/javascript">
+            {% block js %}{% endblock %}
+        </script>
+    </head>
+    <body>
+        {% block content %}{% endblock %}
+    </body>
+</html>
