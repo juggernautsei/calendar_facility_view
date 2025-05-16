@@ -22,12 +22,7 @@ try {
     }
 
 
-    $viewVars = [
-//        'facility_id' => $facilityId,
-//        'selected_date' => $date,
-//        'appointments' => $appointments,
-        // Add any other variables your Twig template will need
-    ];
+    $viewVars = [];
     //die("Under construction");
     // Assuming your Twig template is named 'facility_day_view.html.twig'
     // and is located in a 'calendar' subdirectory of the main Twig templates folder
