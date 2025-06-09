@@ -1,0 +1,551 @@
+{# Twig
+*****************************************************************************
+Copyright (C) 2005-2006 Rod Roark <rod@sunsetsystems.com> and others
+Copyright (C) 2019 Jerry Padgett <sjpadgett@gmail.com>
+Copyright (C) 2022 Stephen Nielson <stephen@nielson.org>
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+***************************************************************************** #}
+{% include ("calendar/" ~ TPL_NAME ~ "/views/header.html.twig") %}
+
+{# Values used in setting timeslot and event heights
+/* if you change these be sure to change their matching values in
+ * the CSS for the calendar, found in interface/themes/ajax_calendar.css
+ */
+#}
+{% set timeslotHeightVal=20 %}
+{% set timeslotHeightUnit="px" %}
+
+{%  include ("calendar/" ~ TPL_NAME ~ "/views/_common-javascript.html.twig") %}
+
+<style>
+    /* Ensure month selector is visible in week view */
+    #datePicker {
+        display: block !important;
+    }
+    #monthPicker {
+        display: none;
+        position: absolute;
+        top: 15px;
+        z-index: 1000;
+        background-color: #fff;
+        border: 1px solid #ccc;
+        padding: 5px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+    .tdMonthName-small {
+        font-weight: bold;
+        text-align: center;
+    }
+    /* Fix header styling for day and date */
+    .week-view-header th {
+        font-size: 1em;
+        padding: 5px;
+    }
+    .week-day-name, .week-day-date {
+        display: inline-block;
+    }
+    /* Fix provider header row */
+    .provider-row th {
+        font-size: 0.9em;
+        font-weight: normal;
+        border-bottom: 1px solid #ddd;
+        padding: 2px;
+    }
+    /* Fix column structure */
+    .timeslot-column {
+        width: 80px;
+        border-right: 1px solid #999;
+    }
+    /* Time slot styling for new appointments */
+    .time-slot {
+        position: relative;
+        z-index: 1;
+    }
+    .time-slot-link {
+        display: block;
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 2;
+    }
+    .time-slot-link:hover {
+        background-color: rgba(255, 255, 0, 0.2);
+        cursor: pointer;
+    }
+    .time-slot-link:hover::before {
+        content: attr(data-time);
+        position: absolute;
+        left: 5px;
+        top: 2px;
+        font-size: 0.8em;
+        color: #333;
+        font-weight: bold;
+        background-color: rgba(255, 255, 255, 0.8);
+        padding: 1px 4px;
+        border-radius: 3px;
+    }
+    .provider-section {
+        position: relative;
+        min-height: {{ (calEndMin - calStartMin) / interval * timeslotHeightVal }}px;
+    }
+    /* CSS for the time slots */
+    .time-slot {
+        z-index: 25;
+        pointer-events: auto;
+        position: absolute;
+    }
+
+    .time-slot-link {
+        display: block;
+        width: 100%;
+        height: 100%;
+        text-decoration: none;
+        color: transparent;
+        z-index: 25;
+        position: absolute;
+    }
+
+    .time-slot-link:hover, .time-slot-link.hovered {
+        color: #000;
+        background-color: rgba(255, 255, 0, 0.3);
+        font-weight: bold;
+        text-align: center;
+    }
+
+    .time-slots-container {
+        pointer-events: auto;
+        z-index: 20 !important;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+    }
+
+    /* Make sure pointer events work through appointment events */
+    .calendar_day {
+        position: relative;
+        height: 100%;
+        min-height: {{ (calEndMin - calStartMin) / interval * timeslotHeightVal }}px;
+    }
+
+    .event {
+        pointer-events: auto;
+        z-index: 10;
+        position: absolute !important;
+    }
+
+    /* Provider section needs to be relative for absolute positioning */
+    .provider-section {
+        position: relative !important;
+        height: {{ (calEndMin - calStartMin) / interval * timeslotHeightVal }}px;
+    }
+
+    /* Schedule column should be relative positioned for absolute children */
+    .schedule {
+        position: relative;
+        height: 100%;
+    }
+</style>
+
+<style type="text/css">
+    {{ calendarStyleCSS|raw }}
+
+    #bigCal {
+        overflow: visible;
+    }
+
+    /* for the week view top timeslot area */
+    .timeslot {
+        font-size: 0.8em;
+    }
+
+    .week_dateheader {
+        font-size: 0.7em;
+        font-weight: bold;
+    }
+
+    #times {
+        width: 50px;
+        background-color: var(--light);
+        padding: 0px;
+    }
+
+    #times table {
+        margin-bottom: 0;
+    }
+
+    #times td.timeslot {
+        height: {{ timeslotHeightVal ~ timeslotHeightUnit }};
+        text-align: right;
+        padding-right: 4px;
+        border-bottom: 1px solid #ddd;
+    }
+
+    /* Ensure time slots are visible */
+    .timeslot a {
+        display: block;
+        width: 100%;
+        text-align: right;
+        font-size: 0.8em;
+        padding-right: 4px;
+    }
+
+    /* Calendar columns */
+    .schedule {
+        position: relative;
+        height: {{ (calEndMin - calStartMin) / interval * timeslotHeightVal }}px;
+        min-width: 100px;
+    }
+
+    .week_dateheader {
+        white-space: nowrap;
+    }
+
+    .week_dateheader {
+        padding: 0px 0px;
+        text-decoration: none;
+        padding-top: 5px;
+    }
+
+    .week_dateheader span {
+        display: block;
+        width: 100%;
+        text-align: center;
+    }
+
+    .week_dateheader span.week-day-name {
+        background-color: var(--primary);
+        color: var(--white);
+        font-weight: bold;
+    }
+
+    .week_dateheader span.week-day-date {
+        background-color: var(--light);
+    }
+
+    .week_dateheader.week_currday span.week-day-name {
+        background-color: var(--success);
+    }
+
+    /* Make sure pointer events work through appointment events */
+    .calendar_day {
+        position: relative;
+        height: 100%;
+        min-height: {{ (calEndMin - calStartMin) / interval * timeslotHeightVal }}px;
+    }
+
+    .event {
+        pointer-events: auto;
+        z-index: 10;
+        position: absolute !important;
+        overflow: hidden;
+    }
+
+    /* Provider section needs to be relative for absolute positioning */
+    .provider-section {
+        position: relative !important;
+        height: {{ (calEndMin - calStartMin) / interval * timeslotHeightVal }}px;
+    }
+
+    /* Schedule column should be relative positioned for absolute children */
+    .schedule {
+        position: relative;
+        height: 100%;
+    }
+
+    /* Ensure time slots are clickable */
+    .time-slot {
+        position: absolute;
+        width: 100%;
+        z-index: 25;
+        pointer-events: auto;
+    }
+
+    .time-slot-link {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+
+    /* Provider header styling */
+    .providerheader {
+        font-weight: bold;
+        text-align: center;
+        background-color: var(--primary) !important;
+        color: var(--white) !important;
+    }
+
+    /* Add spacing between provider tables */
+    .table-responsive {
+        margin-bottom: 20px;
+    }
+
+    /* Styling for weekend days */
+    .weekend-day {
+        background-color: var(--light);
+    }
+
+    /* Ensure events display at correct height */
+    #bigCal .table.border-0 {
+        table-layout: fixed;
+    }
+
+    /* Ensure proper height of calendar cells */
+    .calendar_day {
+        height: {{ (calEndMin - calStartMin) / interval * timeslotHeightVal }}px;
+        position: relative;
+    }
+
+    /* Absolute positioning of events */
+    .calendar_day .event {
+        position: absolute !important;
+        z-index: 10;
+    }
+
+    /* Add time slot links on top with higher z-index */
+    .calendar_day .time-slot {
+        position: absolute;
+        width: 100%;
+        z-index: 25;
+    }
+
+    /* Ensure time column width consistency */
+    .time-column-header, #times {
+        width: 2px !important;
+        min-width: 2px !important;
+        max-width: 2px !important;
+    }
+    #times .table .timeslot {
+        width: 2px !important;
+        min-width: 2px !important;
+        max-width: 2px !important;
+        text-align: left;
+    }
+    /* Override any responsive or other styling that might affect the width */
+    td#times, td.time-column-header {
+        width: 2px !important;
+        min-width: 2px !important;
+        max-width: 2px !important;
+        padding: 0 !important;
+    }
+</style>
+
+<div id="wrapper">
+    <form name='theform' id='theform' action='index.php?module=PostCalendar&func=view&tplview=default&pc_category=&pc_topic=' method='post' onsubmit='return top.restoreSession()'>
+      <input type="hidden" name="viewtype" value="week">
+      <input type="hidden" name="Date" value="{{ Date|attr }}">
+        <div class="container-fluid sticky-top">
+            <div id="topToolbarRight" class="bgcolor2">
+                {% include "calendar/" ~ TPL_NAME ~ "/views/_menu-toggle.html.twig" with {IS_TODAY: IS_TODAY, viewtype: viewtype, Date:Date} %}
+
+                <div id="dateNAV">
+                    <a id='prevweek' href='{{ PREV_WEEK_URL }}' onclick='top.restoreSession()' title='{{ "Previous Week"|xla }}'>
+                        <i class='fa {{ chevron_icon_left|attr}} chevron_color'></i>
+                    </a>
+                    {% set atmp = A_EVENTS|keys %}
+                    {{ atmp[0]|date('d')|text }} {{ atmp[0]|date('M')|xlt }} {{ atmp[0]|date('Y')|text }}
+                    -
+                    {{ atmp[atmp|length-1]|date('d')|text }} {{ atmp[atmp|length-1]|date('M')|xlt }} {{ atmp[atmp|length-1]|date('Y')|text }}
+                    <a id='nextweek' href='{{ NEXT_WEEK_URL }}' onclick='top.restoreSession()' title='{{ "Next Week"|xla }}'>
+                        <i class='fa {{ chevron_icon_right|attr}} chevron_color'></i>
+                    </a>
+                </div>
+                {% include "calendar/" ~ TPL_NAME ~ "/views/_view-picker.html.twig" with {activeView:'week', Date: Date} %}
+            </div> <!-- end topToolbarRight -->
+        </div>
+        <div class="sticky-top">
+            {% set DOWCalendar = generateDOWCalendar(Date, DOWlist) %}
+            {% set caldateFormatted = caldateFormatted ~ ' ' ~ cYear %}
+            {% include ("calendar/" ~ TPL_NAME ~ "/views/_sidebar-bottom-left.html.twig")
+                with {Date: Date, prevMonth: prevMonth, prevMonthFormatted: prevMonthFormatted, nextMonth: nextMonth,
+                nextMonthFormatted: nextMonthFormatted, DOWlist: DOWlist, DOWCalendar: DOWCalendar, caldateFormatted: caldateFormatted,
+                A_SHORT_DAY_NAMES: A_SHORT_DAY_NAMES, facilitySelectorList: facilitySelectorList, providerSelectorList: providerSelectorList} %}
+        </div>
+
+        <div class="page-content-wrapper">
+            <div class="container-fluid calsearch_body">
+                <div id="bigCal" class="mt-3">
+                    {# Loop through each provider - each gets their own table #}
+                    {% for provider in providers %}
+                        {% set providerid = provider['id'] %}
+                        {% set tmpTime = times[0] %}
+                        {% set calStartMin = (tmpTime['hour'] * 60) + tmpTime['minute'] %}
+                        {% set tmpTime = times[times|length-1] %}
+                        {% set calEndMin = (tmpTime['hour'] * 60) + tmpTime['minute'] %}
+                        {% set colWidth = 100/7 %} {# intentionally '7' and not '8' #}
+
+                        <div class="table-responsive">
+                            <table class="table border-0">
+                                {# Provider header row #}
+                                <tr>
+                                    <td colspan="8" class="providerheader bg-primary text-white">
+                                        {{ provider['fname']|text }} {{ provider['lname']|text }}
+                                    </td>
+                                </tr>
+
+                                {# Date header row #}
+                                <tr>
+                                    <td class="time-column-header align-top" style="width:2px !important; min-width:2px !important; max-width:2px !important;"></td> {# blank TD for the header above the Times column #}
+                                    {% set defaultDate = "" %} {# used when creating link for a 'new' event #}
+                                    {% set in_cat_id = 0 %} {# used when creating link for a 'new' event #}
+
+                                    {% for date, events in A_EVENTS %}
+                                        {% set dateFmt = date|date('Ymd') %}
+                                        {% set gotoURL = "index.php?module=PostCalendar&func=view&tplview=" ~ (template_view|url_encode) ~
+                                                      "&viewtype=day&Date=" ~ dateFmt ~
+                                                      "&pc_username=" ~ (pc_username|url_encode) ~
+                                                      "&pc_category=" ~ (category|url_encode) ~
+                                                      "&pc_topic=" ~ (topic|url_encode) %}
+
+                                        {% if defaultDate == "" %}
+                                            {% set defaultDate = dateFmt %}
+                                        {% endif %}
+
+                                        {% set currclass = "" %}
+                                        {% if Date == dateFmt %}
+                                            {% set currclass = "week_currday" %}
+                                        {% endif %}
+
+                                        <td class="text-center week_dateheader {{ currclass|attr }}" style="width:{{ colWidth }}%;">
+                                            <a href="{{ gotoURL }}" onclick="top.restoreSession()">
+                                                <span class="week-day-name">{{ date|date('D')|xlt }}</span>
+                                                <span class="week-day-date">{{ date|date('m/d')|text }}</span>
+                                            </a>
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+
+                                {# Time slots and events row #}
+                                <tr>
+                                    {# Time column #}
+                                    {% include ("calendar/" ~ TPL_NAME ~ "/views/_timeslots.html.twig") with { times: times, providers: providers, Date: defaultDate} %}
+
+                                     {# For each day, show a column with the events #}
+                                    {% for date, events in A_EVENTS %}
+                                        {% set eventdate = date|date('Ymd') %}
+                                        {% set headDate = date|date('U') %}
+                                        {% set day = date|date('w') %}
+
+                                        {% if is_weekend_day(day) %}
+                                            {% set classForWeekend = 'weekend-day' %}
+                                        {% else %}
+                                            {% set classForWeekend = 'work-day' %}
+                                        {% endif %}
+
+                                        <td class="schedule {{ classForWeekend }}"
+                                            title="{{ date|date('l, d M Y')|attr }}"
+                                            date="{{ eventdate|attr }}"
+                                            provider="{{ providerid|attr }}">
+                                            <div class="calendar_day">
+                                                {# Add time slots for appointment creation #}
+                                                {% for slottime in times %}
+                                                    {% set startampm = (slottime['mer']) == "pm" ? 2 : 1 %}
+                                                    {% set starttimeh = slottime['hour'] %}
+                                                    {% set starttimem = slottime['minute'] %}
+                                                    {% set slotendmins = starttimeh * 60 + starttimem + interval %}
+                                                    {% set in_cat_id = 0 %}
+                                                    {% set disptimeh = (starttimeh > 12 and timeformat == 12) ? (starttimeh - 12) : starttimeh %}
+                                                    {% set disptimeh = (starttimeh == 0 and timeformat == 12) ? 12 : disptimeh %}
+
+                                                    {# Calculate position #}
+                                                    {% set eMinDiff = (starttimeh * 60 + starttimem) - calStartMin %}
+                                                    {% set eStartInterval = eMinDiff / interval %}
+                                                    {% set eStartPos = eStartInterval * timeslotHeightVal %}
+                                                    {% set slotTop = eStartPos ~ timeslotHeightUnit %}
+
+                                                    <div class="time-slot" style="top: {{ slotTop|attr }}; height: {{ timeslotHeightVal ~ timeslotHeightUnit|attr }}; z-index: 25;">
+                                                        <a href="javascript:newEvt({{ startampm|attr_js }},{{ starttimeh|attr_js }},{{ starttimem|attr_js }},{{ date|date('Y-m-d')|attr_js }},{{ providerid|attr_js }},{{ in_cat_id|attr_js }})"
+                                                           title="{{ "New Appointment"|xla }}"
+                                                           class="time-slot-link"
+                                                           style="display: block; width: 100%; height: 100%;"
+                                                           data-time="{{ disptimeh|text }}:{{ starttimem|format('%02d')|text }}">
+                                                        </a>
+                                                    </div>
+                                                {% endfor %}
+
+                                                {# Render existing provider events #}
+                                                {{ renderProviderTimeSlots(times, events, interval, provider, providerid, calEndMin, calStartMin,
+                                                   timeformat, openhour, closehour, timeslotHeightVal, timeslotHeightUnit, date, viewtype) }}
+                                            </div>
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+                            </table>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    var tsHeight={{ timeslotHeightVal~timeslotHeightUnit|js_escape }};
+    var tsHeightNum={{ timeslotHeightVal|js_escape }};
+
+    $(function () {
+        setupDirectTime();
+        $("#pc_username").change(function() { ChangeProviders(this); });
+        $("#pc_facility").change(function() { $('#theform').submit(); });
+        $(".tdDatePicker").click(function() { ChangeDate(this); });
+        $("#printview").click(function() { PrintView(); });
+        $(".tdDatePicker").mouseover(function() { $(this).toggleClass("tdDatePickerHighlight"); });
+        $(".tdDatePicker").mouseout(function() { $(this).toggleClass("tdDatePickerHighlight"); });
+        $("#datePicker .tdMonthName-small").click(function() {
+            ChangeMonth(this);
+        });
+
+        // Month selector click functionality
+        function ChangeMonth(eventObject) {
+            var monthPicker = $("#monthPicker");
+            var tdMonthName = $(".tdMonthName-small");
+
+            // Toggle the month picker
+            if (monthPicker.css('display') === "none") {
+                monthPicker.css('display', 'block');
+                // Position the month picker properly
+                var offset = tdMonthName.offset();
+                monthPicker.css({
+                    left: offset.left,
+                    top: offset.top + tdMonthName.outerHeight()
+                });
+            } else {
+                monthPicker.css('display', 'none');
+            }
+
+            // Handle clicks outside the month picker to close it
+            $(document).mouseup(function(e) {
+                if (!monthPicker.is(e.target) && monthPicker.has(e.target).length === 0) {
+                    monthPicker.css('display', 'none');
+                }
+            });
+        }
+
+        // Date picker cell click functionality
+        function ChangeDate(eObj) {
+            var baseURL = {{ JAVASCRIPT_BASE_URL|js_escape }};
+            var newURL = baseURL.replace(/~REPLACEME~/, eObj.id);
+            document.location.href=newURL;
+        }
+
+        // Print view functionality
+        function PrintView() {
+            let url = 'index.php?module=PostCalendar&func=view&viewtype=week_print&Date={{ Date|js_escape }}&pc_facility={{ pc_facility|js_escape }}&pc_username={{ pc_username|js_escape }}';
+            window.open(url,'_blank');
+        }
+
+        // Add hovering effect to time slot links
+        $('.time-slot-link').hover(function() {
+            // Show time text on hover
+            $(this).addClass('hovered');
+        }, function() {
+            // Hide time text when not hovering
+            $(this).removeClass('hovered');
+        });
+    });
+</script>

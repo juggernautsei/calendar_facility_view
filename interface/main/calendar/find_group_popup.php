@@ -33,10 +33,9 @@ $info_msg = "";
 $group_types = TherapyGroupsController::prepareGroupTypesList();
 // If we are searching, search.
 //
-$searchby = $_POST['searchby'] ?? null;
-$searchparm = $_POST['searchparm'] ?? null;
-if ($searchby && $searchparm) {
-    $searchparm = trim($searchparm);
+if ($_POST['searchby'] && $_POST['searchparm']) {
+    $searchby = $_POST['searchby'];
+    $searchparm = trim($_POST['searchparm']);
 
     if ($searchby == "Name") {
         $result = getGroupData("$searchparm", "*", 'group_name');
@@ -164,7 +163,7 @@ if ($searchby && $searchparm) {
         }
     </style>
 
-    <script>
+    <script
 
         function selgid(gid, name, end_date) {
             if (opener.closed || !opener.setgroup)
@@ -190,7 +189,7 @@ if ($searchby && $searchparm) {
             <option value="ID"<?php echo ($searchby == 'ID') ? ' selected' : ''; ?>><?php echo xlt('ID'); ?></option>
         </select>
         <?php echo xlt('for') . ':'; ?>
-        <input type='text' id='searchparm' name='searchparm' size='12' value='<?php echo attr($searchparam ?? ""); ?>'>        &nbsp;
+        <input type='text' id='searchparm' name='searchparm' size='12' value='<?php echo attr($_POST['searchparm']); ?>'>        &nbsp;
         <input type='submit' id="submitbtn" value='<?php echo xla('Search'); ?>'>
         <div id="searchspinner"><img src="<?php echo $GLOBALS['webroot'] ?>/interface/pic/ajax-loader.gif"></div>
     </form>
@@ -244,8 +243,6 @@ if ($searchby && $searchparm) {
         ?>
         </table>
     </div>
-<?php else : ?>
-<p><?php echo xlt("No groups found"); ?></p>
 <?php endif; ?>
 
 <script>
