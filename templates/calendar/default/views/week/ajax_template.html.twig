@@ -78,7 +78,7 @@ of the License, or (at your option) any later version.
         background-color: rgba(255, 255, 0, 0.2);
         cursor: pointer;
     }
-    .time-slot-link:hover::before {
+    /* .time-slot-link:hover::before {
         content: attr(data-time);
         position: absolute;
         left: 5px;
@@ -89,7 +89,7 @@ of the License, or (at your option) any later version.
         background-color: rgba(255, 255, 255, 0.8);
         padding: 1px 4px;
         border-radius: 3px;
-    }
+    } */
     .provider-section {
         position: relative;
         min-height: {{ (calEndMin - calStartMin) / interval * timeslotHeightVal }}px;
@@ -156,7 +156,16 @@ of the License, or (at your option) any later version.
     {{ calendarStyleCSS|raw }}
 
     #bigCal {
-        overflow: visible;
+        overflow: hidden;
+    }
+
+    #bigCal table {
+        overflow: hidden;
+    }
+
+    #bigCal table th,
+    #bigCal table td{
+        vertical-align:middle;
     }
 
     /* for the week view top timeslot area */
@@ -164,35 +173,11 @@ of the License, or (at your option) any later version.
         font-size: 0.8em;
     }
 
-    .week_dateheader {
-        font-size: 0.7em;
-        font-weight: bold;
-    }
-
     #times {
-        width: 50px;
-        background-color: var(--light);
-        padding: 0px;
-    }
-
-    #times table {
-        margin-bottom: 0;
-    }
-
-    #times td.timeslot {
-        height: {{ timeslotHeightVal ~ timeslotHeightUnit }};
-        text-align: right;
-        padding-right: 4px;
-        border-bottom: 1px solid #ddd;
-    }
-
-    /* Ensure time slots are visible */
-    .timeslot a {
-        display: block;
-        width: 100%;
-        text-align: right;
-        font-size: 0.8em;
-        padding-right: 4px;
+        padding: .3125rem !important;
+        width: 1%;
+        border-right: 1px solid #dee2e6;
+        background-color: #fff;
     }
 
     /* Calendar columns */
@@ -200,16 +185,6 @@ of the License, or (at your option) any later version.
         position: relative;
         height: {{ (calEndMin - calStartMin) / interval * timeslotHeightVal }}px;
         min-width: 100px;
-    }
-
-    .week_dateheader {
-        white-space: nowrap;
-    }
-
-    .week_dateheader {
-        padding: 0px 0px;
-        text-decoration: none;
-        padding-top: 5px;
     }
 
     .week_dateheader span {
@@ -280,14 +255,9 @@ of the License, or (at your option) any later version.
         color: var(--white) !important;
     }
 
-    /* Add spacing between provider tables */
-    .table-responsive {
-        margin-bottom: 20px;
-    }
-
     /* Styling for weekend days */
     .weekend-day {
-        background-color: var(--light);
+        background-color: #fff;
     }
 
     /* Ensure events display at correct height */
@@ -313,26 +283,21 @@ of the License, or (at your option) any later version.
         width: 100%;
         z-index: 25;
     }
-
-    /* Ensure time column width consistency */
-    .time-column-header, #times {
-        width: 2px !important;
-        min-width: 2px !important;
-        max-width: 2px !important;
+    .primary-bg-td{
+        background:#007bff;
     }
-    #times .table .timeslot {
-        width: 2px !important;
-        min-width: 2px !important;
-        max-width: 2px !important;
+    #bigCal tr td:first-child {
+            width: 50px;
+        }
+    .time-slot-link:hover, .time-slot-link.hovered {
+        color: #007bff !important;
+        background-color: #fff;
+        border: 1px solid #222;
+        border-radius: 4px;
         text-align: left;
+        font-weight: 400;
     }
-    /* Override any responsive or other styling that might affect the width */
-    td#times, td.time-column-header {
-        width: 2px !important;
-        min-width: 2px !important;
-        max-width: 2px !important;
-        padding: 0 !important;
-    }
+
 </style>
 
 <div id="wrapper">
@@ -369,7 +334,7 @@ of the License, or (at your option) any later version.
 
         <div class="page-content-wrapper">
             <div class="container-fluid calsearch_body">
-                <div id="bigCal" class="mt-3">
+                <div id="bigCal">
                     {# Loop through each provider - each gets their own table #}
                     {% for provider in providers %}
                         {% set providerid = provider['id'] %}
@@ -383,14 +348,15 @@ of the License, or (at your option) any later version.
                             <table class="table border-0">
                                 {# Provider header row #}
                                 <tr>
-                                    <td colspan="8" class="providerheader bg-primary text-white">
+                                    <td class="primary-bg-td"></td>
+                                    <td colspan="7" class="providerheader bg-primary text-white">
                                         {{ provider['fname']|text }} {{ provider['lname']|text }}
                                     </td>
                                 </tr>
 
                                 {# Date header row #}
                                 <tr>
-                                    <td class="time-column-header align-top" style="width:2px !important; min-width:2px !important; max-width:2px !important;"></td> {# blank TD for the header above the Times column #}
+                                    <td>&nbsp;</td> {# blank TD for the header above the Times column #}
                                     {% set defaultDate = "" %} {# used when creating link for a 'new' event #}
                                     {% set in_cat_id = 0 %} {# used when creating link for a 'new' event #}
 
@@ -412,9 +378,7 @@ of the License, or (at your option) any later version.
                                         {% endif %}
 
                                         <td class="text-center week_dateheader {{ currclass|attr }}" style="width:{{ colWidth }}%;">
-                                            <a href="{{ gotoURL }}" onclick="top.restoreSession()">
-                                                <span class="week-day-name">{{ date|date('D')|xlt }}</span>
-                                                <span class="week-day-date">{{ date|date('m/d')|text }}</span>
+                                            <a href="{{ gotoURL }}" onclick="top.restoreSession()">{{ date|date('D')|xlt }} {{ date|date('m/d')|text }}
                                             </a>
                                         </td>
                                     {% endfor %}
@@ -460,10 +424,11 @@ of the License, or (at your option) any later version.
 
                                                     <div class="time-slot" style="top: {{ slotTop|attr }}; height: {{ timeslotHeightVal ~ timeslotHeightUnit|attr }}; z-index: 25;">
                                                         <a href="javascript:newEvt({{ startampm|attr_js }},{{ starttimeh|attr_js }},{{ starttimem|attr_js }},{{ date|date('Y-m-d')|attr_js }},{{ providerid|attr_js }},{{ in_cat_id|attr_js }})"
-                                                           title="{{ "New Appointment"|xla }}"
+                                                           title="{{ provider['fname']|text }} {{ provider['lname']|text }}"
                                                            class="time-slot-link"
                                                            style="display: block; width: 100%; height: 100%;"
                                                            data-time="{{ disptimeh|text }}:{{ starttimem|format('%02d')|text }}">
+                                                           {{ disptimeh|text }}:{{ starttimem|format('%02d')|text }}
                                                         </a>
                                                     </div>
                                                 {% endfor %}
