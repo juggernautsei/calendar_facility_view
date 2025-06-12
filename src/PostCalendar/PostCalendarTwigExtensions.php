@@ -50,6 +50,15 @@ class PostCalendarTwigExtensions  extends AbstractExtension
             ),
             new TwigFunction(
                 'PrintEvents', [$this, 'PrintEvents'], ['is_safe' => ['html']]
+            ),
+            new TwigFunction(
+                'getProviderInfo', [$this, 'getProviderInfo']
+            ),
+            new TwigFunction(
+                'datetimepickerJsConfig', [$this, 'getDatetimepickerJsConfig'], ['is_safe' => ['html']]
+            ),
+            new TwigFunction(
+                'getCalendarImagePath', [$this, 'getCalendarImagePath']
             )
         ];
     }
@@ -539,7 +548,8 @@ class PostCalendarTwigExtensions  extends AbstractExtension
                 $divTitle .= "\n[".$atitle ."]";
                 $content .= text($catname);
                 if ($event['recurrtype'] > 0) {
-                    $content .= "<img class='border-0' src='{$this->_tpl_vars['TPL_IMAGE_PATH']}/repeating8.png' style='margin: 0 2px 0 2px;' title='" . xla("Repeating event") . "' alt='" . xla("Repeating event") . "' />";
+                    $imagePath = $this->getCalendarImagePath();
+                    $content .= "<img class='border-0' src='" . attr($imagePath . "/repeating8.png") . "' style='margin: 0 2px 0 2px;' title='" . attr(xl("Repeating event")) . "' alt='" . attr(xl("Repeating event")) . "' />";
                 }
                 if ($comment) $content .= " " . text($comment);
             }
@@ -555,8 +565,12 @@ class PostCalendarTwigExtensions  extends AbstractExtension
 
                 $content .= "<span class='appointment" . attr($apptToggle ?? "") . "'>";
                 $content .= $this->create_event_time_anchor($dispstarth . ':' . $startm);
-                if ($event['recurrtype'] > 0) $content .= "<img src='{$this->_tpl_vars['TPL_IMAGE_PATH']}/repeating8.png' class='border-0' style='margin:0 2px 0 2px;' title='Repeating event' alt='Repeating event' />";
+                if ($event['recurrtype'] > 0) {
+                    $imagePath = $this->getCalendarImagePath();
+                    $content .= "<img src='" . attr($imagePath . "/repeating8.png") . "' class='border-0' style='margin:0 2px 0 2px;' title='" . attr(xl("Repeating event")) . "' alt='" . attr(xl("Repeating event")) . "' />";
+                }
                 $content .= text($event['apptstatus']);
+
                 if ($patientid) {
                     // include patient name and link to their details
                     $link_title = $fname . " " . $lname . " \n";
@@ -569,7 +583,7 @@ class PostCalendarTwigExtensions  extends AbstractExtension
                     if ($GLOBALS['calendar_appt_style'] != 1) {
                         $content .= "," . text($fname);
                         if ($event['title'] && $GLOBALS['calendar_appt_style'] >= 3) {
-                            $content .= "(" . text($event['title']);
+                            $content .= " (" . text($event['title']);
                             if ($event['hometext'] && $GLOBALS['calendar_appt_style'] >= 4)
                                 $content .= ": <span class='text-success'>" . text(trim($event['hometext'])) . "</span>";
                             $content .= ")";
@@ -730,6 +744,44 @@ class PostCalendarTwigExtensions  extends AbstractExtension
     }
 
     /**
+     * Get provider information by provider ID
+     * @param int $providerID Provider ID
+     * @return array Provider information
+     */
+    public function getProviderInfo($providerID)
+    {
+        $provquery = "SELECT * FROM users WHERE id=?";
+        $res = sqlStatement($provquery, [$providerID]);
+        $provinfo = sqlFetchArray($res);
+        return $provinfo;
+    }
+    
+    /**
+     * Get the JavaScript configuration for the datetimepicker
+     * @return string JavaScript configuration
+     */
+    public function getDatetimepickerJsConfig()
+    {
+        ob_start();
+        $datetimepicker_timepicker = false;
+        $datetimepicker_showseconds = false;
+        $datetimepicker_formatInput = false;
+        require($GLOBALS['srcdir'] . '/js/xl/jquery-datetimepicker-2-5-4.js.php');
+        $output = ob_get_clean();
+        return $output;
+    }
+
+    /**
+     * Gets the path to calendar images for use in templates
+     * @return string The path to calendar images
+     */
+    public function getCalendarImagePath()
+    {
+        global $webroot;
+        return $webroot . "/interface/main/calendar/modules/PostCalendar/pntemplates/default/images";
+    }
+
+    /**
      * Print events for calendar views
      * 
      * @param array $events Array of events to display
@@ -811,9 +863,8 @@ class PostCalendarTwigExtensions  extends AbstractExtension
                 $content .= text($event['lname'] . ", " . $event['fname']);
                 if (!empty($event['title']) && $GLOBALS['calendar_appt_style'] >= 3) {
                     $content .= " (" . text($event['title']);
-                    if ($comment && $GLOBALS['calendar_appt_style'] >= 4) {
-                        $content .= ": <span class='text-success'>" . text(trim($comment)) . "</span>";
-                    }
+                    if ($event['hometext'] && $GLOBALS['calendar_appt_style'] >= 4)
+                        $content .= ": <span class='text-success'>" . text(trim($event['hometext'])) . "</span>";
                     $content .= ")";
                 }
             }
@@ -825,5 +876,19 @@ class PostCalendarTwigExtensions  extends AbstractExtension
         }
         
         return $output;
+    }
+
+    public function __construct($smarty = null)
+    {
+        $this->_smarty = $smarty;
+        $this->_tpl_vars = [];
+        
+        // Define necessary variables for Twig template rendering
+        global $rootdir, $webroot;
+        $this->_tpl_vars['rootdir'] = $rootdir;
+        $this->_tpl_vars['webroot'] = $webroot;
+        $this->_tpl_vars['TPL_IMAGE_PATH'] = $webroot . "/interface/main/calendar/modules/PostCalendar/pntemplates/default/images";
+        
+        // Other initializations...
     }
 }
