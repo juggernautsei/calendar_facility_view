@@ -27,7 +27,6 @@ of the License, or (at your option) any later version.
         display: block !important;
     }
     #monthPicker {
-        display: none;
         position: absolute;
         top: 15px;
         z-index: 1000;
@@ -39,6 +38,7 @@ of the License, or (at your option) any later version.
     .tdMonthName-small {
         font-weight: bold;
         text-align: center;
+        cursor: pointer;
     }
     /* Fix header styling for day and date */
     .week-view-header th {
@@ -325,7 +325,11 @@ of the License, or (at your option) any later version.
         </div>
         <div class="sticky-top">
             {% set DOWCalendar = generateDOWCalendar(Date, DOWlist) %}
-            {% set caldateFormatted = caldateFormatted ~ ' ' ~ cYear %}
+            {% set atmp = A_EVENTS|keys %}
+            {% set caldate = atmp[0]|date('U') %}
+            {% set cMonth = atmp[0]|date('m') %}
+            {% set cYear = atmp[0]|date('Y') %}
+            {% set caldateFormatted = atmp[0]|date('F')|xl ~ ' ' ~ cYear %}
             {% include ("calendar/" ~ TPL_NAME ~ "/views/_sidebar-bottom-left.html.twig")
                 with {Date: Date, prevMonth: prevMonth, prevMonthFormatted: prevMonthFormatted, nextMonth: nextMonth,
                 nextMonthFormatted: nextMonthFormatted, DOWlist: DOWlist, DOWCalendar: DOWCalendar, caldateFormatted: caldateFormatted,
@@ -450,7 +454,7 @@ of the License, or (at your option) any later version.
 </div>
 
 <script>
-    var tsHeight={{ timeslotHeightVal~timeslotHeightUnit|js_escape }};
+    var tsHeight={{ timeslotHeightVal|js_escape }};
     var tsHeightNum={{ timeslotHeightVal|js_escape }};
 
     $(function () {
