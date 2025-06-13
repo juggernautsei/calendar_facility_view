@@ -415,6 +415,11 @@ of the License, or (at your option) any later version.
                                             date="{{ eventdate|attr }}"
                                             provider="{{ providerid|attr }}">
                                             <div class="calendar_day">
+                                                {# Add IN label at top left of calendar column #}
+                                                <div class="IN event_in" style="position: absolute; top: 0; left: 0; z-index: 30; font-weight: bold; background: none; width: auto; height: auto;">
+                                                    {{ "IN"|xlt }} <img class="border-0" src="/calendarTwigMigration/interface/main/calendar/modules/PostCalendar/pntemplates/default/images/repeating8.png" style="margin: 0 2px 0 2px;" title="{{ 'Repeating event'|xlt }}" alt="{{ 'Repeating event'|xlt }}">
+                                                </div>
+                                                
                                                 {# Add time slots for appointment creation #}
                                                 {% for slottime in times %}
                                                     {% set startampm = (slottime['mer']) == "pm" ? 2 : 1 %}

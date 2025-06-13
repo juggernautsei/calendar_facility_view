@@ -442,7 +442,18 @@ function postcalendar_user_search()
 
     $tpl->caching = false;
     $tpl->assign('STYLE', $GLOBALS['style']);
+    $tpl->assign('assets_static_relative', $GLOBALS['assets_static_relative']);
+    $tpl->assign('webroot', $GLOBALS['webroot']);
+    $tpl->assign('images_static_relative', $GLOBALS['images_static_relative']);
+    
     $pageSetup =& pnModAPIFunc(__POSTCALENDAR__, 'user', 'pageSetup');
-    $return = $pageSetup . $tpl->fetch($template_name . '/user/ajax_search.html');
+    
+    // Check if we should use Twig template explicitly (when twig=1 parameter is passed)
+    if (isset($_REQUEST['twig']) && $_REQUEST['twig'] == 1) {
+        $return = $pageSetup . $tpl->fetch('calendar/default/views/user/ajax_search.html.twig');
+    } else {
+        $return = $pageSetup . $tpl->fetch($template_name . '/user/ajax_search.html');
+    }
+    
     return $return;
 }

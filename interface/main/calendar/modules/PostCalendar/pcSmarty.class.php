@@ -99,6 +99,18 @@ class pcSmarty extends Smarty_Legacy
                 return $this->twig->render($twig_template, $this->_tpl_vars);
             }
         }
+        // Handle the case for user directory templates
+        elseif (preg_match('|^user/([^\.]+)\.html$|', $resource_name, $matches)) {
+            $template_view = $matches[1];
+            
+            // Map to new Twig template path for user directory
+            $twig_template = "calendar/default/views/user/$template_view.html.twig";
+            
+            // Check if the template exists
+            if ($this->twig->getLoader()->exists($twig_template)) {
+                return $this->twig->render($twig_template, $this->_tpl_vars);
+            }
+        }
         // Handle the case for direct Twig template names
         // This is a fallback for any direct Twig template references
         elseif (strpos($resource_name, '.html.twig') !== false) {
