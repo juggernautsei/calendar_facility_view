@@ -163,9 +163,14 @@ of the License, or (at your option) any later version.
         overflow: hidden;
     }
 
-    #bigCal table th,
-    #bigCal table td{
-        vertical-align:middle;
+    .week_dateheader{
+        vertical-align:middle !important;
+    }
+    .empty-td{
+        display: none;
+    }
+    .show-empty-td .empty-td{
+        display: table-cell;
     }
 
     /* for the week view top timeslot area */

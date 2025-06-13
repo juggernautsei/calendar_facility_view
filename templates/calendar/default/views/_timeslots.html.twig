@@ -1,4 +1,5 @@
 <td id='times'><div class='table-responsive'><table class='table'>
+    <tr class='empty-td'><td>&nbsp;</td></tr>
     {% for slottime in times %}
         {% set startampm = (slottime['mer']) == "pm" ? 2 : 1 %}
         {% set starttimeh = slottime['hour'] %}
