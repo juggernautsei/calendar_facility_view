@@ -282,6 +282,25 @@ of the License, or (at your option) any later version.
         z-index: 10;
     }
 
+    /* IN/OUT event styling */
+    .event_in {
+        background: #99FFFF !important;
+        border: 1px solid #99CCCC !important;
+        z-index: 10;
+    }
+
+    .event_out {
+        background: #EEEEEE !important; 
+        border: 1px solid #CCCCCC !important;
+        z-index: 10;
+    }
+    
+    /* IN label for offices - appears at top of calendar cell */
+    .in_start {
+        font-weight: bold;
+        z-index: 20 !important;
+    }
+
     /* Add time slot links on top with higher z-index */
     .calendar_day .time-slot {
         position: absolute;
@@ -415,10 +434,13 @@ of the License, or (at your option) any later version.
                                             date="{{ eventdate|attr }}"
                                             provider="{{ providerid|attr }}">
                                             <div class="calendar_day">
-                                                {# Add IN label at top left of calendar column #}
-                                                <div class="IN event_in" style="position: absolute; top: 0; left: 0; z-index: 30; font-weight: bold; background: none; width: auto; height: auto;">
-                                                    {{ "IN"|xlt }} <img class="border-0" src="/calendarTwigMigration/interface/main/calendar/modules/PostCalendar/pntemplates/default/images/repeating8.png" style="margin: 0 2px 0 2px;" title="{{ 'Repeating event'|xlt }}" alt="{{ 'Repeating event'|xlt }}">
-                                                </div>
+                                                {# We need to add the IN/OUT functionality for the week view #}
+                                                {% set tmpTime = times[0] %}
+                                                {% set calStartMin = (tmpTime['hour'] * 60) + tmpTime['minute'] %}
+                                                {% set tmpTime = times[times|length-1] %}
+                                                {% set calEndMin = (tmpTime['hour'] * 60) + tmpTime['minute'] %}
+                                                
+                                                {# Remove hardcoded IN label - let renderProviderTimeSlots handle it properly #}
                                                 
                                                 {# Add time slots for appointment creation #}
                                                 {% for slottime in times %}
