@@ -434,13 +434,12 @@ of the License, or (at your option) any later version.
                                             date="{{ eventdate|attr }}"
                                             provider="{{ providerid|attr }}">
                                             <div class="calendar_day">
-                                                {# We need to add the IN/OUT functionality for the week view #}
+                                                {# Set up variables for IN/OUT events similar to day template #}
                                                 {% set tmpTime = times[0] %}
                                                 {% set calStartMin = (tmpTime['hour'] * 60) + tmpTime['minute'] %}
                                                 {% set tmpTime = times[times|length-1] %}
                                                 {% set calEndMin = (tmpTime['hour'] * 60) + tmpTime['minute'] %}
-                                                
-                                                {# Remove hardcoded IN label - let renderProviderTimeSlots handle it properly #}
+                                                {% set provfl = provider['fname'] ~ ' ' ~ provider['lname'] %}
                                                 
                                                 {# Add time slots for appointment creation #}
                                                 {% for slottime in times %}
@@ -469,7 +468,7 @@ of the License, or (at your option) any later version.
                                                     </div>
                                                 {% endfor %}
 
-                                                {# Render existing provider events #}
+                                                {# Render existing provider events including IN/OUT events #}
                                                 {{ renderProviderTimeSlots(times, events, interval, provider, providerid, calEndMin, calStartMin,
                                                    timeformat, openhour, closehour, timeslotHeightVal, timeslotHeightUnit, date, viewtype) }}
                                             </div>
