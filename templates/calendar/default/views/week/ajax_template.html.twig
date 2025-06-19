@@ -284,8 +284,8 @@ of the License, or (at your option) any later version.
 
     /* IN/OUT event styling */
     .event_in {
-        background: #99FFFF !important;
-        border: 1px solid #99CCCC !important;
+        background: #86cfee !important;
+        border: 1px solid rgb(222, 226, 230);
         z-index: 10;
     }
 
@@ -320,6 +320,16 @@ of the License, or (at your option) any later version.
         border-radius: 4px;
         text-align: left;
         font-weight: 400;
+    }
+
+    .event_out.event_highlight,
+    .event_in.event_highlight {
+        background-color: #ffc107 !important;
+        cursor: pointer;
+        font-weight: bold;
+        margin: 0;
+        opacity: 1;
+        z-index: 2;
     }
 
 </style>
@@ -494,6 +504,11 @@ of the License, or (at your option) any later version.
         $("#pc_facility").change(function() { $('#theform').submit(); });
         $(".tdDatePicker").click(function() { ChangeDate(this); });
         $("#printview").click(function() { PrintView(); });
+        $(".event").dblclick(function() { EditEvent(this); });
+        console.log($(".event"));
+        $(".event").mouseover(function() { $(this).toggleClass("event_highlight"); });
+        $(".event").mouseout(function() { $(this).toggleClass("event_highlight"); });
+
         $(".tdDatePicker").mouseover(function() { $(this).toggleClass("tdDatePickerHighlight"); });
         $(".tdDatePicker").mouseout(function() { $(this).toggleClass("tdDatePickerHighlight"); });
         $("#datePicker .tdMonthName-small").click(function() {
@@ -537,6 +552,23 @@ of the License, or (at your option) any later version.
         function PrintView() {
             let url = 'index.php?module=PostCalendar&func=view&viewtype=week_print&Date={{ Date|js_escape }}&pc_facility={{ pc_facility|js_escape }}&pc_username={{ pc_username|js_escape }}';
             window.open(url,'_blank');
+        }
+
+        /* edit an existing event */
+        var EditEvent = function(eObj) {
+            //alert ('editing '+eObj.id);
+            // split the object ID into date and event ID
+            objID = eObj.id;
+            var parts = new Array();
+            parts = objID.split("-");
+            editing_group = $(eObj).hasClass("groups");
+            if(editing_group){
+                oldGroupEvt(parts[0], parts[1], parts[2]);
+                return true;
+            }
+            // call the oldEvt function to bring up the event editor
+            oldEvt(parts[0], parts[1], parts[2]);
+            return true;
         }
 
         // Add hovering effect to time slot links
